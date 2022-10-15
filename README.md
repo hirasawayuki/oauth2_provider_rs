@@ -8,8 +8,7 @@ OAuth2.0 provider is built on Rust.
 - [ ] Token introspection (/oauth/introspection)
 
 ## Library
-**HTTP Server**
-[actix-web](https://github.com/actix/actix-web)
-
-**DB**
-[sqlx](https://github.com/launchbadge/sqlx)
+Type | Name | URL
+---- | ---- | ----
+HTTP Server | actix-web | https://github.com/actix/actix-web
+DB | sqlx | https://github.com/launchbadge/sqlx
