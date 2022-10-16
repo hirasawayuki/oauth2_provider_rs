@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      target: develop
+    volumes:
+      - ./backend:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    command:
+      /bin/sh -c "cargo watch -x run"
+  nginx:
+    image: nginx:1.17.10-alpine
+    ports:
+      - 80:80
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+
+volumes:
+  cargo-cache:
+  target-cache:
+
