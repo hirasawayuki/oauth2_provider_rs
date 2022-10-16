@@ -12,3 +12,4 @@ Type | Name | URL
 ---- | ---- | ----
 HTTP Server | actix-web | https://github.com/actix/actix-web
 DB | sqlx | https://github.com/launchbadge/sqlx
+Error Handling | anyhow | https://github.com/dtolnay/anyhow
