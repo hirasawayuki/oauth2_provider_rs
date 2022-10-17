@@ -13,6 +13,7 @@ OAuth2.0 provider is built on Rust.
 ### Build development
 ```sh
 $ docker-compose build
+$ docker-compose up -d
 ```
 
 ### DB migration
