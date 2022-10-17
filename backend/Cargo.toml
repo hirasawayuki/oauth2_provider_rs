@@ -8,4 +8,6 @@ edition = "2021"
 [dependencies]
 actix-web = "4.2.1"
 dotenv = "0.15.0"
+serde_json = "1.0.86"
 sqlx = { version = "0.6", features = [ "runtime-actix-native-tls" , "mysql" ] }
+tinytemplate = "1.2.1"
