@@ -9,6 +9,17 @@ OAuth2.0 provider is built on Rust.
 - [ ] Token refresh (/oauth/token)
 - [ ] Token introspection (/oauth/introspection)
 
+## Usage
+### Build development
+```sh
+$ docker-compose build
+```
+
+### DB migration
+```
+$ sqlx migrate run --database-url {DB_URL}/oauth2_development
+```
+
 ## Library
 ### Backend
 Type | Name | URL
@@ -18,7 +29,6 @@ DB | sqlx | https://github.com/launchbadge/sqlx
 Error Handling | anyhow | https://github.com/dtolnay/anyhow
 
 ## Database
-
 ### users
 column | type
 ---- | ----
