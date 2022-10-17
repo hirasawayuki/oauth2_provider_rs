@@ -17,35 +17,45 @@ Error Handling | anyhow | https://github.com/dtolnay/anyhow
 ## Database
 
 ### users
-*id: int
-name: varchar
-email: varchar
-password: varchar
+column | type
+---- | ----
+*id | int
+name | varchar(36)
+email | varchar(256)
+password | varchar(36)
 
 ### oauth_clients
-*id: int
-name: varchar
-scope: varchar
-revoked: tinyint
-redirect_uri: varchar
+column | type
+---- | ----
+*id | int
+name | varchar(36)
+scope | varchar(36)
+revoked | tinyint(1)
+redirect_uri | varchar(256)
 
 ### access_tokens
-*token: varchar
-user_id: int
-client_id: int
-scope: varchar
-revoked: tinyint
-expires_at: datetime
+column | type
+---- | ----
+*token | varchar
+user_id | int
+client_id | int
+scope | varchar(36)
+revoked | tinyint(1)
+expires_at | datetime
 
 ### refresh_tokens
-*refresh_token: varchar(36)
-access_token: varchar(36)
-revoked: tinyint
-expires_at: datetime
+column | type
+---- | ----
+*refresh_token | varchar(36)
+access_token | varchar(36)
+revoked | tinyint(1)
+expires_at | datetime
 
 ### authrize_codes
-*code: varchar(36)
-user_id: int
-client_id: int
-revoked: tinyint
-expires_at: datetime
+column | type
+---- | ----
+*code | varchar(36)
+user_id | int
+client_id | int
+revoked | tinyint(1)
+expires_at | datetime
