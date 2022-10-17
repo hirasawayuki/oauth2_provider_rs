@@ -52,7 +52,7 @@ access_token | varchar(32)
 revoked | tinyint(1)
 expires_at | datetime
 
-### authrize_codes
+### authorize_codes
 column | type
 ---- | ----
 *code | varchar(32)
