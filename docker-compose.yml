@@ -11,6 +11,17 @@ services:
       - target-cache:/app/target
     command:
       /bin/sh -c "cargo watch -x run"
+  db:
+    image: mysql:5.7
+    platform: linux/amd64
+    volumes:
+      - ./db/initdb.d:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    ports:
+          - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      TZ: Asia/Tokyo
   nginx:
     image: nginx:1.17.10-alpine
     ports:
@@ -23,4 +34,5 @@ services:
 volumes:
   cargo-cache:
   target-cache:
+  mysql-data:
 

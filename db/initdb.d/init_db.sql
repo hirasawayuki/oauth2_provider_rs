@@ -1,0 +1,1 @@
+CREATE DATABASE IF NOT EXISTS oauth2_development;
