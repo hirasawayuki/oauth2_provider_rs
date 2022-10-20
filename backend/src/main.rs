@@ -1,65 +1,28 @@
-use actix_web::{error, HttpServer, HttpResponse, App, web, Error};
-use serde::{Serialize, Deserialize};
-use tinytemplate::TinyTemplate;
+use std::env;
+use actix_web::{HttpServer, App, web};
+use anyhow::{Result, Ok};
+use dotenv::dotenv;
 
-async fn index(
-    template: web::Data<TinyTemplate<'_>>,
-) -> Result<HttpResponse, Error> {
-    let s = template.render("index.html", &serde_json::Value::Null)
-        .map_err(|_| error::ErrorInternalServerError("Template error"))?;
-
-    Ok(HttpResponse::Ok().content_type("text/html").body(s))
-}
-
-async fn signup(
-    template: web::Data<TinyTemplate<'_>>,
-) -> Result<HttpResponse, Error> {
-    let s = template.render("signup.html", &serde_json::Value::Null)
-        .map_err(|_| error::ErrorInternalServerError("Template error"))?;
-
-    Ok(HttpResponse::Ok().content_type("text/html").body(s))
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct LoginParams {
-    email: String,
-    password: String,
-}
-
-async fn post_login(params: web::Form<LoginParams>) -> Result<HttpResponse, Error> {
-    println!("hogheogehogehogeo");
-    println!("email: {} password: {}", params.email, params.password);
-    Ok(HttpResponse::Ok().content_type("text/html").body(""))
-}
-
-async fn login(
-    template: web::Data<TinyTemplate<'_>>,
-) -> Result<HttpResponse, Error> {
-    println!("hogehoge");
-    let s = template.render("login.html", &serde_json::Value::Null)
-        .map_err(|_| error::ErrorInternalServerError("Template error"))?;
-    Ok(HttpResponse::Ok().content_type("text/html").body(s))
-}
+mod db;
+mod handler;
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        let mut tt = TinyTemplate::new();
-        tt.add_template("index.html", INDEX).unwrap();
-        tt.add_template("signup.html", SIGNUP).unwrap();
-        tt.add_template("login.html", LOGIN).unwrap();
+async fn main() -> Result<()> {
+    dotenv().ok();
+    let db_url = env::var("DATABASE_URL")?;
+    let pool = db::init_pool(&db_url).await?;
 
+    HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(tt))
-            .service(web::resource("/").route(web::get().to(index)))
-            .service(web::resource("/signup").route(web::get().to(signup)))
-            .service(web::resource("/login").route(web::get().to(login)))
-            .service(web::resource("/post_login").route(web::post().to(post_login)))
+            .app_data(web::Data::new(pool.clone()))
+            .service(web::resource("/").route(web::get().to(handler::top::index)))
+            .service(web::resource("/signup").route(web::get().to(handler::signup::new)))
+            .service(web::resource("/register").route(web::post().to(handler::signup::create)))
+            .service(web::resource("/login").route(web::get().to(handler::login::new)))
+            .service(web::resource("/authenticate").route(web::post().to(handler::login::create)))
     }).bind(("0.0.0.0", 8080))?
     .run()
-    .await
-}
+    .await?;
 
-static INDEX: &str = include_str!("../templates/index.html");
-static SIGNUP: &str = include_str!("../templates/signup.html");
-static LOGIN: &str = include_str!("../templates/login.html");
+    Ok(())
+}

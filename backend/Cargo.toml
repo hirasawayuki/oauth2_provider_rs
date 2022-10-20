@@ -3,13 +3,12 @@ name = "oauth2_provider_rs"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 actix-web = "4.2.1"
 anyhow = "1.0.65"
+askama = "0.11.1"
 dotenv = "0.15.0"
+rust-argon2 = "1.0.0"
 serde = { version = "^1.0.145", features = ["derive"] }
 serde_json = "1.0.86"
 sqlx = { version = "0.6", features = [ "runtime-actix-native-tls" , "mysql" ] }
-tinytemplate = "1.2.1"
