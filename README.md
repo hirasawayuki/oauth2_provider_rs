@@ -2,7 +2,7 @@
 OAuth2.0 provider is built on Rust.
 
 ## Road map
-- [ ] User signup (/signup)
+- [x] User signup (/signup)
 - [ ] User login (/login)
 - [ ] Authorize endpoint (/oauth/authorize)
 - [ ] Token endpoint (/oauth/token)
