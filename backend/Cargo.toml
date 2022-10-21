@@ -4,10 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix-session = { version = "0.7.2", features = ["cookie-session"] }
 actix-web = "4.2.1"
 anyhow = "1.0.65"
 askama = "0.11.1"
+async-trait = "0.1.58"
 dotenv = "0.15.0"
+env_logger = "0.9.1"
 rust-argon2 = "1.0.0"
 serde = { version = "^1.0.145", features = ["derive"] }
 serde_json = "1.0.86"

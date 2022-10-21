@@ -2,10 +2,9 @@ use actix_web::{HttpResponse, web};
 use anyhow::Context;
 use askama::Template;
 use serde::{Serialize, Deserialize};
-use sqlx::MySqlPool;
 
+use crate::{service::signup::SignupService, repository::user::MySqlUserRepository};
 use super::error::HandlerError;
-use super::utils::hash_password;
 
 #[derive(Template)]
 #[template(path="../templates/signup.html")]
@@ -28,37 +27,14 @@ pub struct SignupParams {
 
 pub async fn create(
     params: web::Form<SignupParams>,
-    pool: web::Data<MySqlPool>,
 ) -> Result<HttpResponse, HandlerError> {
     if params.password != params.password_confirmation {
         return Ok(HttpResponse::BadRequest().content_type("text/html").body("Password and confirmation password do not match."));
     }
-    create_user(&params.name, &params.email, &params.password, &pool).await?;
 
-    Ok(HttpResponse::Ok().content_type("text/html").body("sinup successful!"))
+    let repo = MySqlUserRepository::new().await?;
+    let service = SignupService::new(Box::new(repo));
+    service.register_user(&params.name, &params.email, &params.password).await?;
+
+    return Ok(HttpResponse::Ok().content_type("text/html").body("sinup successful!"));
 }
-
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct User {
-    pub name: String,
-    pub email: String,
-    pub password: String,
-}
-
-async fn create_user(name: &str, email: &str, password: &str, pool: &MySqlPool) -> anyhow::Result<()> {
-    let password_hash = hash_password(password)?;
-
-    sqlx::query(
-        r#"
-INSERT INTO users (name, email, password) VALUES (?, ?, ?);
-        "#)
-        .bind(name)
-        .bind(email)
-        .bind(String::from(password_hash))
-        .execute(pool)
-        .await?;
-
-    Ok(())
-}
-

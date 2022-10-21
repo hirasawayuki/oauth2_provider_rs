@@ -1,4 +1,4 @@
-use argon2::{Config, hash_encoded};
+use argon2::{Config, hash_encoded, verify_encoded};
 
 pub fn hash_password(password: &str) -> anyhow::Result<String> {
     let config = Config::default();
@@ -8,3 +8,8 @@ pub fn hash_password(password: &str) -> anyhow::Result<String> {
     return anyhow::Ok(hash);
 }
 
+pub fn verify_password(hash: &str, password: &str) -> anyhow::Result<bool> {
+    let result = verify_encoded(&hash, password.as_bytes())?;
+
+    return anyhow::Ok(result);
+}
