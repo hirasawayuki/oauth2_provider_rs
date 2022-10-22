@@ -1,5 +1,5 @@
-use actix_session::Session;
-use actix_web::{HttpResponse, web, http::header};
+use actix_identity::Identity;
+use actix_web::{HttpResponse, web, HttpRequest, HttpMessage, http::header };
 use anyhow::Context;
 use askama::Template;
 use serde::{Serialize, Deserialize};
@@ -23,16 +23,19 @@ pub struct LoginParams {
     password: String,
 }
 
-pub async fn create(params: web::Form<LoginParams>, session: Session) -> Result<HttpResponse, HandlerError> {
+pub async fn create(params: web::Form<LoginParams>, request: HttpRequest) -> Result<HttpResponse, HandlerError> {
     let repo = MySqlUserRepository::new().await?;
     let service = LoginService::new(Box::new(repo));
     let result = service.verify_credentials(&params.email, &params.password).await?;
     if result {
-        match session.insert("ident", &params.email) {
-            Ok(_) => return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish()),
-            Err(_) => return Ok(HttpResponse::Ok().content_type("text/html").body("login failure")),
-        }
+        Identity::login(&request.extensions(), "User1".into());
+        return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish());
     }
 
     Ok(HttpResponse::Ok().content_type("text/html").body("login failure"))
+}
+
+pub async fn delete(id: Identity) -> Result<HttpResponse, HandlerError> {
+    id.logout();
+    Ok(HttpResponse::Ok().content_type("text/html").body("logout"))
 }

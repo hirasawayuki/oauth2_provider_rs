@@ -1,6 +1,8 @@
+use actix_identity::IdentityMiddleware;
 use actix_session::{SessionMiddleware, storage::CookieSessionStore, config::PersistentSession};
 use actix_web::{HttpServer, App, web, middleware::Logger, cookie::{self, Key}};
 use anyhow::{Result, Ok};
+use middleware::auth::Authenticator;
 
 mod db;
 mod handler;
@@ -8,6 +10,7 @@ mod service;
 mod repository;
 mod entity;
 mod utils;
+mod middleware;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -17,19 +20,21 @@ async fn main() -> Result<()> {
 
 
     HttpServer::new(move || {
+        let session_mw = SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
+            .cookie_secure(false)
+            .session_lifecycle(PersistentSession::default().session_ttl(cookie::time::Duration::hours(2)))
+            .build();
+
         App::new()
             .wrap(Logger::default())
-            .wrap(SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
-                  .cookie_secure(false)
-                  .session_lifecycle(PersistentSession::default().session_ttl(cookie::time::Duration::hours(2)))
-                  .build()
-            )
+            .wrap(IdentityMiddleware::default())
+            .wrap(session_mw)
             .service(web::resource("/").route(web::get().to(handler::top::index)))
             .service(web::resource("/signup").route(web::get().to(handler::signup::new)))
             .service(web::resource("/register").route(web::post().to(handler::signup::create)))
             .service(web::resource("/login").route(web::get().to(handler::login::new)))
             .service(web::resource("/authenticate").route(web::post().to(handler::login::create)))
-            .service(web::resource("/home").route(web::get().to(handler::home::index)))
+            .service(web::resource("/home").wrap(Authenticator).route(web::get().to(handler::home::index)))
     }).bind(("0.0.0.0", 8080))?
     .run()
     .await?;
