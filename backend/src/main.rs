@@ -6,7 +6,6 @@ use middleware::auth::Authenticator;
 
 mod db;
 mod handler;
-mod service;
 mod repository;
 mod entity;
 mod utils;
@@ -16,8 +15,7 @@ mod middleware;
 async fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
-
-
+    let connection_pool = db::establish_connection().await?;
 
     HttpServer::new(move || {
         let session_mw = SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
@@ -26,14 +24,15 @@ async fn main() -> Result<()> {
             .build();
 
         App::new()
+            .app_data(web::Data::new(connection_pool.clone()))
             .wrap(Logger::default())
             .wrap(IdentityMiddleware::default())
             .wrap(session_mw)
             .service(web::resource("/").route(web::get().to(handler::top::index)))
             .service(web::resource("/signup").route(web::get().to(handler::signup::new)))
             .service(web::resource("/register").route(web::post().to(handler::signup::create)))
-            .service(web::resource("/login").route(web::get().to(handler::login::new)))
-            .service(web::resource("/authenticate").route(web::post().to(handler::login::create)))
+            .service(web::resource("/login").route(web::get().to(handler::login::new_session)))
+            .service(web::resource("/authenticate").route(web::post().to(handler::login::create_session)))
             .service(web::resource("/home").wrap(Authenticator).route(web::get().to(handler::home::index)))
     }).bind(("0.0.0.0", 8080))?
     .run()

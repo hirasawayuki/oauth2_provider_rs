@@ -7,13 +7,5 @@ pub struct User {
     pub id: u32,
     pub name: String,
     pub email: String,
-    password: String,
-}
-
-impl User {
-    pub fn verify_password(&self, password: &str) -> anyhow::Result<bool> {
-        let result = verify_password(&self.password, password)?;
-
-        return anyhow::Ok(result);
-    }
+    pub password: String,
 }

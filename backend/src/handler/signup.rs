@@ -2,8 +2,9 @@ use actix_web::{HttpResponse, web};
 use anyhow::Context;
 use askama::Template;
 use serde::{Serialize, Deserialize};
+use sqlx::MySqlPool;
 
-use crate::{service::signup::SignupService, repository::user::MySqlUserRepository};
+use crate::{ repository::user, utils::hash_password::hash_password};
 use super::error::HandlerError;
 
 #[derive(Template)]
@@ -27,14 +28,14 @@ pub struct SignupParams {
 
 pub async fn create(
     params: web::Form<SignupParams>,
+    pool: web::Data<MySqlPool>,
 ) -> Result<HttpResponse, HandlerError> {
     if params.password != params.password_confirmation {
         return Ok(HttpResponse::BadRequest().content_type("text/html").body("Password and confirmation password do not match."));
     }
 
-    let repo = MySqlUserRepository::new().await?;
-    let service = SignupService::new(Box::new(repo));
-    service.register_user(&params.name, &params.email, &params.password).await?;
+    let password_hash = hash_password(&params.password)?;
+    user::create(&params.name, &params.email, &password_hash, &pool).await?;
 
     return Ok(HttpResponse::Ok().content_type("text/html").body("sinup successful!"));
 }
