@@ -35,7 +35,7 @@ column | type
 ---- | ----
 *id | int
 name | varchar(32)
-email | varchar(256)
+email | varchar(255)
 password | varchar(36)
 
 ### oauth_clients
@@ -43,9 +43,11 @@ column | type
 ---- | ----
 *id | int
 name | varchar(32)
+client_id | varchar(255)
+client_secret | varchar(255)
 scope | varchar(32)
 revoked | tinyint(1)
-redirect_uri | varchar(256)
+redirect_uri | varchar(255)
 
 ### access_tokens
 column | type
