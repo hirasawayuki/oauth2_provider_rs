@@ -31,11 +31,15 @@ pub async fn create(
     pool: web::Data<MySqlPool>,
 ) -> Result<HttpResponse, HandlerError> {
     if params.password != params.password_confirmation {
-        return Ok(HttpResponse::BadRequest().content_type("text/html").body("Password and confirmation password do not match."));
+        return Ok(HttpResponse::BadRequest()
+                  .content_type("text/html")
+                  .body("Password and confirmation password do not match."));
     }
 
     let password_hash = hash_password(&params.password)?;
     user::create(&params.name, &params.email, &password_hash, &pool).await?;
 
-    return Ok(HttpResponse::Ok().content_type("text/html").body("sinup successful!"));
+    return Ok(HttpResponse::Ok()
+              .content_type("text/html")
+              .body("sinup successful!"));
 }

@@ -32,7 +32,7 @@ pub async fn create_session(
 ) -> Result<HttpResponse, HandlerError> {
     let user = user::find_by_email(&params.email, &connection_pool).await?;
     if verify_password(&user.password, &params.password)? {
-        Identity::login(&request.extensions(), String::from(&params.email));
+        Identity::login(&request.extensions(), user.id.to_string());
         return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish());
     }
 

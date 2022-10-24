@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>OAuth2 provider</title>
+</head>
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+  <h1>OAuth2 provider</h1>
+  <h3>Registration OAuth Client</h3>
+  <form action="/oauth_client/register" method="post" class="signup-form" style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+    <div>
+      <div><label htmlFor="name">*name (required)</label></div>
+      <input id="name" type="text" name="name" style="width: 320px;"/><br/>
+    </div>
+    <div>
+      <div><label htmlFor="redirect_uri">*redirect_uri(required)</label></div>
+      <input id="redirect_uri" type="text" name="redirect_uri" style="width: 320px;"/><br/>
+    </div>
+    <button type="submit" style="margin: 24px 0 0 0; width: 240px;">Submit</button>
+  </form>
+</body>
+</html>

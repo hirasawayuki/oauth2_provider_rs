@@ -1,12 +1,12 @@
 version: "3.7"
 
 services:
-  backend:
+  app:
     build:
       context: .
       target: develop
     volumes:
-      - ./backend:/app
+      - .:/app
       - cargo-cache:/usr/local/cargo/registry
       - target-cache:/app/target
     command:
@@ -28,7 +28,7 @@ services:
     ports:
       - 80:80
     depends_on:
-      - backend
+      - app
 
 volumes:
   cargo-cache:

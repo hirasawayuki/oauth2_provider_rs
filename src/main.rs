@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
     HttpServer::new(move || {
         let session_mw = SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
             .cookie_secure(false)
-            .session_lifecycle(PersistentSession::default().session_ttl(cookie::time::Duration::hours(2)))
+            .session_lifecycle(PersistentSession::default().session_ttl(cookie::time::Duration::hours(1)))
             .build();
 
         App::new()
@@ -31,6 +31,8 @@ async fn main() -> Result<()> {
             .service(web::resource("/").route(web::get().to(handler::top::index)))
             .service(web::resource("/signup").route(web::get().to(handler::signup::new)))
             .service(web::resource("/register").route(web::post().to(handler::signup::create)))
+            .service(web::resource("/oauth_client/new").wrap(Authenticator).route(web::get().to(handler::oauth_client::new)))
+            .service(web::resource("/oauth_client/register").wrap(Authenticator).route(web::post().to(handler::oauth_client::create)))
             .service(web::resource("/login").route(web::get().to(handler::login::new_session)))
             .service(web::resource("/authenticate").route(web::post().to(handler::login::create_session)))
             .service(web::resource("/home").wrap(Authenticator).route(web::get().to(handler::home::index)))
