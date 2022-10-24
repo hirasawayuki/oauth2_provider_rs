@@ -1,4 +1,5 @@
 use actix_identity::Identity;
+use actix_session::SessionExt;
 use actix_web::{HttpResponse, web, HttpRequest, HttpMessage, http::header };
 use anyhow::Context;
 use askama::Template;
@@ -32,8 +33,14 @@ pub async fn create_session(
 ) -> Result<HttpResponse, HandlerError> {
     let user = user::find_by_email(&params.email, &connection_pool).await?;
     if verify_password(&user.password, &params.password)? {
-        Identity::login(&request.extensions(), user.id.to_string());
-        return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish());
+        Identity::login(&request.extensions(), user.id.to_string())?;
+        let session = request.get_session();
+        let redirect_url = session.remove("redirect_url");
+        if let Some(redirect_url) = redirect_url {
+            return Ok(HttpResponse::Found().append_header((header::LOCATION, redirect_url)).finish());
+        } else {
+            return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish());
+        }
     }
 
     Ok(HttpResponse::BadRequest().content_type("text/html").body("login failure"))

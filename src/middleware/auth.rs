@@ -1,6 +1,7 @@
 use std::future::{Ready, ready};
 
 use actix_identity::IdentityExt;
+use actix_session::SessionExt;
 use actix_web::body::EitherBody;
 use actix_web::dev::{self, Transform, ServiceRequest, Service, ServiceResponse};
 use actix_web::{Error, HttpResponse};
@@ -49,6 +50,8 @@ where
         };
 
         if !is_logged_in && request.path() != "/login" {
+            let session = request.get_session();
+            session.insert("redirect_url", request.uri().to_string());
             let (request, _pl) = request.into_parts();
 
             let response = HttpResponse::Found().insert_header((header::LOCATION, "/login"))

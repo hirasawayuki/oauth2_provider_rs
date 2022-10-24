@@ -3,5 +3,6 @@ pub mod home;
 pub mod signup;
 pub mod top;
 pub mod oauth_client;
+pub mod authorization;
 
 mod error;

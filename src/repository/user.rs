@@ -14,6 +14,18 @@ INSERT INTO users (name, email, password) VALUES (?, ?, ?);
     Ok(())
 }
 
+pub async fn find_by_id(id: &str, connection_pool: &MySqlPool) -> anyhow::Result<User> {
+    let user = sqlx::query_as::<_, User>(
+        r#"
+SELECT id, name, email, password FROM users WHERE id = ?
+        "#)
+        .bind(id)
+        .fetch_one(connection_pool)
+        .await?;
+
+    anyhow::Ok(user)
+}
+
 pub async fn find_by_email(email: &str, connection_pool: &MySqlPool) -> anyhow::Result<User> {
     let user = sqlx::query_as::<_, User>(
         r#"
