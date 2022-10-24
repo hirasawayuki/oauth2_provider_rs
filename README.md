@@ -43,6 +43,8 @@ column | type
 ---- | ----
 *id | int
 name | varchar(32)
+client_id | varchar(256)
+client_secret | varchar(256)
 scope | varchar(32)
 revoked | tinyint(1)
 redirect_uri | varchar(256)
