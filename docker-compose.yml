@@ -3,7 +3,7 @@ version: "3.7"
 services:
   backend:
     build:
-      context: ./backend
+      context: .
       target: develop
     volumes:
       - ./backend:/app
