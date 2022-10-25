@@ -1,16 +1,21 @@
 use actix_web::HttpResponse;
-use anyhow::Context;
 use askama::Template;
 
-use super::error::HandlerError;
+use super::error::HtmlError;
 
 #[derive(Template)]
 #[template(path="../templates/index.html")]
 struct IndexTemplate{}
 
-pub async fn index() -> Result<HttpResponse, HandlerError> {
+pub async fn index() -> Result<HttpResponse, HtmlError> {
     let html = IndexTemplate{};
-    let res_body = html.render().context("failed to render template")?;
 
-    Ok(HttpResponse::Ok().content_type("text/html").body(res_body))
+    match html.render() {
+        Ok(body) => {
+            Ok(HttpResponse::Ok().content_type("text/html").body(body))
+        },
+        Err(_) => {
+            Err(HtmlError::Status5XX)
+        }
+    }
 }

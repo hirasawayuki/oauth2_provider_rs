@@ -1,23 +1,24 @@
 use actix_identity::Identity;
 use actix_session::SessionExt;
 use actix_web::{HttpResponse, web, HttpRequest, HttpMessage, http::header };
-use anyhow::Context;
 use askama::Template;
 use serde::{Serialize, Deserialize};
 use sqlx::MySqlPool;
 
 use crate::{utils::hash_password::verify_password, repository::user};
-use super::error::HandlerError;
+use super::error::HtmlError;
 
 #[derive(Template)]
 #[template(path="../templates/login.html")]
 struct LoginTemplate{}
 
-pub async fn new_session() -> Result<HttpResponse, HandlerError> {
+pub async fn new_session() -> Result<HttpResponse, HtmlError> {
     let html = LoginTemplate{};
-    let res_body = html.render().context("failed to render template")?;
+    if let Ok(body) = html.render() {
+        return Ok(HttpResponse::Ok().content_type("text/html").body(body));
+    }
 
-    Ok(HttpResponse::Ok().content_type("text/html").body(res_body))
+    Err(HtmlError::Status5XX)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -30,14 +31,28 @@ pub async fn create_session(
     params: web::Form<LoginParams>,
     connection_pool: web::Data<MySqlPool>,
     request: HttpRequest
-) -> Result<HttpResponse, HandlerError> {
-    let user = user::find_by_email(&params.email, &connection_pool).await?;
-    if verify_password(&user.password, &params.password)? {
-        Identity::login(&request.extensions(), user.id.to_string())?;
-        let session = request.get_session();
-        let redirect_url = session.get::<String>("redirect_url").context("failed to get redirect_url from session")?;
-        session.remove("redirect_url");
+) -> Result<HttpResponse, HtmlError> {
+    let user = match user::find_by_email(&params.email, &connection_pool).await {
+        Ok(user) => user,
+        Err(_) => { return Err(HtmlError::Status4XX); }
+    };
 
+    match verify_password(&user.password, &params.password) {
+        Ok(result) => {
+            if !result {
+                return Err(HtmlError::Status4XX);
+            }
+        },
+        Err(_) => { return Err(HtmlError::Status5XX); }
+    };
+
+    if let Err(_) = Identity::login(&request.extensions(), user.id.to_string()) {
+        return Err(HtmlError::Status4XX);
+    }
+
+    let session = request.get_session();
+    if let Ok(redirect_url) = session.get::<String>("redirect_url") {
+        session.remove("redirect_url");
         if let Some(redirect_url) = redirect_url {
             return Ok(HttpResponse::Found().append_header((header::LOCATION, redirect_url)).finish());
         } else {
@@ -45,10 +60,10 @@ pub async fn create_session(
         }
     }
 
-    Ok(HttpResponse::BadRequest().content_type("text/html").body("login failure"))
+    return Err(HtmlError::Status4XX);
 }
 
-pub async fn delete_session(id: Identity) -> Result<HttpResponse, HandlerError> {
+pub async fn delete_session(id: Identity) -> Result<HttpResponse, HtmlError> {
     id.logout();
-    Ok(HttpResponse::Ok().content_type("text/html").body("logout"))
+    return Ok(HttpResponse::Found().append_header((header::LOCATION, "/")).finish());
 }

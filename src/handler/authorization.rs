@@ -44,9 +44,3 @@ pub async fn authorize(
     let url = Url::parse_with_params(&query.redirect_uri, params).context("failed to callback url")?;
     return Ok(HttpResponse::Found().append_header((header::LOCATION, url.to_string())).finish());
 }
-
-// pub async fn get_token() {
-// check code
-// generate access_token and refresh_token
-// response access_token and refresh_tokena and expires_at
-// }
