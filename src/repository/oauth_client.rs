@@ -1,5 +1,7 @@
 use sqlx::MySqlPool;
 
+use crate::entity::oauth_client::OAuthClient;
+
 pub async fn create(
     user_id: &str,
     name: &str,
@@ -25,4 +27,24 @@ VALUES
         .execute(connection_pool)
         .await?;
     Ok(())
+}
+
+pub async fn find_by_client_id(
+    client_id: &str,
+    connection_pool: &MySqlPool
+) -> anyhow::Result<OAuthClient> {
+    let oauth_client = sqlx::query_as::<_, OAuthClient>(
+        r#"
+SELECT
+    id, name, user_id, client_id, client_secret, scope, revoked, redirect_uri
+FROM
+    oauth_clients
+WHERE
+    client_id = ?
+        "#)
+        .bind(client_id)
+        .fetch_one(connection_pool)
+        .await?;
+
+    anyhow::Ok(oauth_client)
 }

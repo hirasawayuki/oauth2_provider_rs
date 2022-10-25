@@ -35,7 +35,9 @@ pub async fn create_session(
     if verify_password(&user.password, &params.password)? {
         Identity::login(&request.extensions(), user.id.to_string())?;
         let session = request.get_session();
-        let redirect_url = session.remove("redirect_url");
+        let redirect_url = session.get::<String>("redirect_url").context("failed to get redirect_url from session")?;
+        session.remove("redirect_url");
+
         if let Some(redirect_url) = redirect_url {
             return Ok(HttpResponse::Found().append_header((header::LOCATION, redirect_url)).finish());
         } else {

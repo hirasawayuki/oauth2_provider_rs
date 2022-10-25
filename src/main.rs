@@ -37,6 +37,7 @@ async fn main() -> Result<()> {
             .service(web::resource("/logout").route(web::post().to(handler::login::delete_session)))
             .service(web::resource("/authenticate").route(web::post().to(handler::login::create_session)))
             .service(web::resource("/home").wrap(Authenticator).route(web::get().to(handler::home::index)))
+            .service(web::resource("/authorize").wrap(Authenticator).route(web::get().to(handler::authorization::authorize)))
     }).bind(("0.0.0.0", 8080))?
     .run()
     .await?;

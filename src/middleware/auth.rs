@@ -51,7 +51,7 @@ where
 
         if !is_logged_in && request.path() != "/login" {
             let session = request.get_session();
-            session.insert("redirect_url", request.uri().to_string());
+            session.insert::<String>("redirect_url", request.uri().to_string());
             let (request, _pl) = request.into_parts();
 
             let response = HttpResponse::Found().insert_header((header::LOCATION, "/login"))
