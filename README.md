@@ -5,9 +5,11 @@ OAuth2.0 provider is built on Rust.
 - [x] User signup (/signup)
 - [x] User login (/login)
 - [x] Authorize endpoint (/oauth/authorize)
+- [x] Resister OAuthClient (/oauth_client/new)
 - [ ] Token endpoint (/oauth/token)
 - [ ] Token refresh (/oauth/token)
 - [ ] Token introspection (/oauth/introspection)
+- [ ] Resource endpoint (/resources) 
 
 ## Usage
 ### Build development
