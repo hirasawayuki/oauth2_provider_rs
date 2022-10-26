@@ -9,13 +9,8 @@ struct IndexTemplate{}
 
 pub async fn index() -> Result<HttpResponse, HtmlError> {
     let html = IndexTemplate{};
-
     match html.render() {
-        Ok(body) => {
-            Ok(HttpResponse::Ok().content_type("text/html").body(body))
-        },
-        Err(_) => {
-            Err(HtmlError::Status5XX)
-        }
+        Ok(body) => Ok(HttpResponse::Ok().content_type("text/html").body(body)),
+        Err(_) => Err(HtmlError::Status5XX),
     }
 }

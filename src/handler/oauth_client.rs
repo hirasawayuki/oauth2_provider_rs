@@ -1,6 +1,5 @@
 use actix_identity::Identity;
 use actix_web::{HttpResponse, web};
-use anyhow::Context;
 use askama::Template;
 use serde::{Serialize, Deserialize};
 use sqlx::MySqlPool;
@@ -8,16 +7,18 @@ use uuid::Uuid;
 
 use crate::{repository::oauth_client, utils::gen_random_string::gen_random_string};
 
-use super::error::HandlerError;
+use super::error::HtmlError;
 
 #[derive(Template)]
 #[template(path="../templates/oauth_client/new.html")]
 struct ClientFormTemplate{}
 
-pub async fn new() -> Result<HttpResponse, HandlerError> {
+pub async fn new() -> Result<HttpResponse, HtmlError> {
     let html = ClientFormTemplate{};
-    let res_body = html.render().context("failed to render template")?;
-    Ok(HttpResponse::Ok().content_type("text/html").body(res_body))
+    match html.render() {
+        Ok(body) => Ok(HttpResponse::Ok().content_type("text/html").body(body)),
+        Err(_) => Err(HtmlError::Status5XX)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,11 +40,18 @@ pub async fn create(
     params: web::Form<ClientParams>,
     connection_pool: web::Data<MySqlPool>,
     id: Identity
-) -> Result<HttpResponse, HandlerError> {
+) -> Result<HttpResponse, HtmlError> {
     let uuid = Uuid::new_v4();
     let secret = gen_random_string(255);
-    let user_id = id.id()?;
-    oauth_client::create(&user_id, &params.name, &params.redirect_uri, "all", &uuid.to_string(), &secret, &connection_pool).await?;
+    let user_id = match id.id() {
+        Ok(user_id) => user_id,
+        Err(_) => { return Err(HtmlError::Status5XX); }
+    };
+
+    if let Err(_) = oauth_client::create(&user_id, &params.name, &params.redirect_uri, "all", &uuid.to_string(), &secret, &connection_pool).await {
+        return Err(HtmlError::Status5XX);
+    }
+
     let html = ClientTemplate {
         name: params.name.clone(),
         redirect_uri: params.redirect_uri.clone(),
@@ -51,6 +59,8 @@ pub async fn create(
         client_secret: secret,
     };
 
-    let res_body = html.render().context("failed to render template")?;
-    Ok(HttpResponse::BadRequest().content_type("text/html").body(res_body))
+    match html.render() {
+        Ok(body) => Ok(HttpResponse::BadRequest().content_type("text/html").body(body)),
+        Err(_) => Err(HtmlError::Status5XX)
+    }
 }

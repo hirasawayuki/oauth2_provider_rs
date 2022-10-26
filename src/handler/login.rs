@@ -14,11 +14,10 @@ struct LoginTemplate{}
 
 pub async fn new_session() -> Result<HttpResponse, HtmlError> {
     let html = LoginTemplate{};
-    if let Ok(body) = html.render() {
-        return Ok(HttpResponse::Ok().content_type("text/html").body(body));
+    match html.render() {
+        Ok(body) => Ok(HttpResponse::Ok().content_type("text/html").body(body)),
+        Err(_) => Err(HtmlError::Status5XX)
     }
-
-    Err(HtmlError::Status5XX)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -37,30 +36,31 @@ pub async fn create_session(
         Err(_) => { return Err(HtmlError::Status4XX); }
     };
 
-    match verify_password(&user.password, &params.password) {
-        Ok(result) => {
-            if !result {
-                return Err(HtmlError::Status4XX);
-            }
-        },
+    let result = match verify_password(&user.password, &params.password) {
+        Ok(result) => result,
         Err(_) => { return Err(HtmlError::Status5XX); }
     };
 
-    if let Err(_) = Identity::login(&request.extensions(), user.id.to_string()) {
+    if !result {
         return Err(HtmlError::Status4XX);
     }
 
-    let session = request.get_session();
-    if let Ok(redirect_url) = session.get::<String>("redirect_url") {
-        session.remove("redirect_url");
-        if let Some(redirect_url) = redirect_url {
-            return Ok(HttpResponse::Found().append_header((header::LOCATION, redirect_url)).finish());
-        } else {
-            return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish());
-        }
+    if let Err(_) = Identity::login(&request.extensions(), user.id.to_string()) {
+        return Err(HtmlError::Status5XX);
     }
 
-    return Err(HtmlError::Status4XX);
+    let session = request.get_session();
+    match session.get::<String>("redirect_url") {
+        Ok(redirect_url) => {
+            session.remove("redirect_url");
+            if let Some(redirect_url) = redirect_url {
+                return Ok(HttpResponse::Found().append_header((header::LOCATION, redirect_url)).finish());
+            } else {
+                return Ok(HttpResponse::Found().append_header((header::LOCATION, "/home")).finish());
+            }
+        },
+        Err(_) => { return Err(HtmlError::Status5XX); }
+    }
 }
 
 pub async fn delete_session(id: Identity) -> Result<HttpResponse, HtmlError> {

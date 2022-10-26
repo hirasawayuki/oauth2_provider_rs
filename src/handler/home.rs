@@ -15,20 +15,23 @@ struct UserTemplate{
 }
 
 pub async fn index(ident: Identity, connection_pool: web::Data<MySqlPool>) -> Result<HttpResponse, HtmlError> {
-    if let Ok(user_id) = ident.id() {
-        match user::find_by_id(&user_id, &connection_pool).await {
-            Ok(user) =>  {
-                let html = UserTemplate {
-                    name: user.name,
-                    email: user.email,
-                };
+    let user_id = match ident.id() {
+        Ok(user_id) => user_id,
+        Err(_) => { return Err(HtmlError::Status5XX); }
+    };
 
-                if let Ok(body) = html.render() {
-                    return Ok(HttpResponse::Ok().content_type("text/html").body(body));
-                }
-            },
-            _ => {}
-        }
+    let html = match user::find_by_id(&user_id, &connection_pool).await {
+        Ok(user) =>  {
+            UserTemplate {
+                name: user.name,
+                email: user.email,
+            }
+        },
+        Err(_) => { return Err(HtmlError::Status4XX); }
+    };
+
+    match html.render() {
+        Ok(body) => Ok(HttpResponse::Ok().content_type("text/html").body(body)),
+        Err(_) => { return Err(HtmlError::Status5XX); }
     }
-    return Err(HtmlError::Status4XX);
 }

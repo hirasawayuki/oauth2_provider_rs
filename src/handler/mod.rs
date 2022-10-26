@@ -4,6 +4,6 @@ pub mod signup;
 pub mod top;
 pub mod oauth_client;
 pub mod authorization;
-// pub mod token;
+pub mod token;
 
 mod error;

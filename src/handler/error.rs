@@ -2,25 +2,7 @@ use std::fmt;
 
 use actix_web::{ResponseError, HttpResponse};
 use askama::Template;
-
-#[derive(Debug)]
-pub struct HandlerError {
-    err: anyhow::Error,
-}
-
-impl actix_web::error::ResponseError for HandlerError {}
-
-impl From<anyhow::Error> for HandlerError {
-    fn from(err: anyhow::Error) -> HandlerError {
-        HandlerError { err }
-    }
-}
-
-impl fmt::Display for HandlerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.err)
-    }
-}
+use serde::Serialize;
 
 #[derive(Template)]
 #[template(path="../templates/error/4xx.html")]
@@ -59,9 +41,39 @@ impl ResponseError for HtmlError {
     }
 }
 
+#[derive(Debug)]
 pub enum JsonError {
     BadRequest,
-    Unauthorized,
-    Forbidden,
     InternalServerError,
+}
+
+#[derive(Serialize)]
+pub struct ErrorBody {
+    status: String,
+    message: String,
+}
+
+impl fmt::Display for JsonError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl ResponseError for JsonError {
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            Self::BadRequest => {
+                HttpResponse::BadRequest().json(ErrorBody{
+                    status: String::from("400"),
+                    message: String::from("invalid request"),
+                })
+            },
+            Self::InternalServerError => {
+                HttpResponse::BadRequest().json(ErrorBody{
+                    status: String::from("500"),
+                    message: String::from("InternalServerError"),
+                })
+            }
+        }
+    }
 }

@@ -11,7 +11,7 @@ pub async fn create(
     sqlx::query(
         r#"
 INSERT INTO
-    authorize_codes (code, user_id, client_id, expires_at)
+    authorization_codes (code, user_id, client_id, expires_at)
 VALUES
     (?, ?, ?, ?);
         "#)
