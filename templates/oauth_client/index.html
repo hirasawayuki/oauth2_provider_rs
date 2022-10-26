@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>OAuth2 provider</title>
+</head>
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+  <h1>OAuthClient</h1>
+  <div style="display: flex; gap: 16px;">
+    <a href="/home">Home</a>
+    <a href="/oauth_client/new">Add OAuthClients</a>
+  </div>
+  {% for oauth_client in oauth_clients %}
+  <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px;">
+    <p style="width: 640px; word-wrap: break-word;"><b>ClientName:</b> {{ oauth_client.name }}</p>
+    <p style="width: 640px; word-wrap: break-word;"><b>RedirectURI:</b> {{ oauth_client.redirect_uri }}</p>
+    <p style="width: 640px; word-wrap: break-word;"><b>ClientID:</b> {{ oauth_client.client_id }}</p>
+    <p style="width: 640px; word-wrap: break-word;"><b>ClientSecret:</b> {{ oauth_client.client_secret }}</p>
+  </div>
+  {% endfor %}
+</body>
+</html>

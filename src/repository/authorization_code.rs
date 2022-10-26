@@ -1,6 +1,28 @@
 use chrono::NaiveDateTime;
 use sqlx::MySqlPool;
 
+use crate::entity::authorization_code::AuthorizationCode;
+
+pub async fn find_by_code(
+    code: &str,
+    connection_pool: &MySqlPool
+) -> anyhow::Result<AuthorizationCode> {
+    let authorization_code = sqlx::query_as::<_, AuthorizationCode>(
+        r#"
+SELECT
+    code, user_id, client_id, revoked, redirect_uri
+FROM
+    authorization_codes
+WHERE
+    code = ?
+        "#)
+        .bind(code)
+        .fetch_one(connection_pool)
+        .await?;
+
+    anyhow::Ok(authorization_code)
+}
+
 pub async fn create(
     code: &str,
     user_id: &str,

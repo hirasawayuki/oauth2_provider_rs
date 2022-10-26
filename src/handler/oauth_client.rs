@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 use sqlx::MySqlPool;
 use uuid::Uuid;
 
-use crate::{repository::oauth_client, utils::gen_random_string::gen_random_string};
+use crate::{repository::oauth_client, utils::gen_random_string::gen_random_string, entity::oauth_client::OAuthClient};
 
 use super::error::HtmlError;
 
@@ -25,6 +25,31 @@ pub async fn new() -> Result<HttpResponse, HtmlError> {
 pub struct ClientParams {
     name: String,
     redirect_uri: String,
+}
+
+#[derive(Template)]
+#[template(path="../templates/oauth_client/index.html")]
+struct IndexTemplate {
+    oauth_clients: Vec<OAuthClient>
+}
+
+pub async fn index(ident: Identity, connection_pool: web::Data<MySqlPool>) -> Result<HttpResponse, HtmlError> {
+    let user_id = match ident.id() {
+        Ok(user_id) => user_id,
+        Err(_) => { return Err(HtmlError::Status5XX); }
+    };
+
+    let oauth_clients = match oauth_client::find_by_user_id(&user_id, &connection_pool).await {
+        Ok(oauth_clients) => oauth_clients,
+        Err(_) => return Err(HtmlError::Status5XX)
+    };
+
+    let html = IndexTemplate { oauth_clients };
+    match html.render() {
+        Ok(body) => Ok(HttpResponse::BadRequest().content_type("text/html").body(body)),
+        Err(_) => Err(HtmlError::Status5XX)
+    }
+
 }
 
 #[derive(Template)]

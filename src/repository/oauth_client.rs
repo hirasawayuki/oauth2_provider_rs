@@ -48,3 +48,23 @@ WHERE
 
     anyhow::Ok(oauth_client)
 }
+
+pub async fn find_by_user_id(
+    user_id: &str,
+    connection_pool: &MySqlPool
+) -> anyhow::Result<Vec<OAuthClient>> {
+    let oauth_clients = sqlx::query_as::<_, OAuthClient>(
+        r#"
+SELECT
+    id, name, user_id, client_id, client_secret, scope, revoked, redirect_uri
+FROM
+    oauth_clients
+WHERE
+    user_id = ?
+        "#)
+        .bind(user_id)
+        .fetch_all(connection_pool)
+        .await?;
+
+    anyhow::Ok(oauth_clients)
+}

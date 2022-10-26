@@ -69,7 +69,7 @@ impl ResponseError for JsonError {
                 })
             },
             Self::InternalServerError => {
-                HttpResponse::BadRequest().json(ErrorBody{
+                HttpResponse::InternalServerError().json(ErrorBody{
                     status: String::from("500"),
                     message: String::from("InternalServerError"),
                 })

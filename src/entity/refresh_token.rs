@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, sqlx::FromRow)]
-pub struct AuthorizationCode {
-    pub code: String,
-    pub user_id: u32,
-    pub client_id: String,
+pub struct RefreshToken {
+    pub token: String,
+    pub access_token: String,
     pub revoked: u32,
     pub expires_at: String,
 }
