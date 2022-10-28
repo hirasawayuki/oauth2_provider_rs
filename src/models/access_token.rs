@@ -4,7 +4,7 @@ use sqlx::MySqlPool;
 use crate::entity::access_token::AccessToken;
 
 pub async fn find_by_refresh_token(
-    refresh_token: &str,
+    token: &str,
     connection_pool: &MySqlPool
 ) -> anyhow::Result<AccessToken> {
     let refresh_token = sqlx::query_as::<_, AccessToken>(
@@ -16,7 +16,7 @@ FROM
 WHERE
     token = ?
         "#)
-        .bind(refresh_token)
+        .bind(token)
         .fetch_one(connection_pool)
         .await?;
 

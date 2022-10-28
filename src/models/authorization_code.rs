@@ -28,8 +28,8 @@ pub async fn create(
     user_id: &str,
     client_id: &str,
     expires_at: NaiveDateTime,
-    connection_pool: &MySqlPool)
--> anyhow::Result<()> {
+    connection_pool: &MySqlPool
+) -> anyhow::Result<()> {
     sqlx::query(
         r#"
 INSERT INTO
@@ -41,6 +41,24 @@ VALUES
         .bind(user_id)
         .bind(client_id)
         .bind(expires_at.to_string())
+        .execute(connection_pool)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn delete(
+    code: &str,
+    connection_pool: &MySqlPool
+) -> anyhow::Result<()> {
+    sqlx::query(
+        r#"
+DELETE FROM
+    authorization_codes
+WHERE
+    code = ?;
+        "#)
+        .bind(code)
         .execute(connection_pool)
         .await?;
 

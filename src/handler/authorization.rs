@@ -47,8 +47,7 @@ pub async fn authorize(
     let utc: DateTime<Utc> = Utc::now();
     let now: NaiveDateTime = utc.naive_local();
     let expires_at = now + Duration::minutes(10);
-    if let Err(e) = authorization_code::create(&code, &user_id, &oauth_client.client_id, expires_at, &connection_pool).await {
-        println!("{}", e);
+    if let Err(_) = authorization_code::create(&code, &user_id, &oauth_client.client_id, expires_at, &connection_pool).await {
          return Err(JsonError::InternalServerError);
     }
 

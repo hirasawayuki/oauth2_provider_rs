@@ -10,7 +10,7 @@ pub async fn find_by_refresh_token(
     let refresh_token = sqlx::query_as::<_, RefreshToken>(
         r#"
 SELECT
-    token, access_token, revoked, expires_at
+    token, access_token, expires_at
 FROM
     refresh_tokens
 WHERE

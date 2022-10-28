@@ -67,7 +67,6 @@ pub async fn create(
 ) -> Result<HttpResponse, HtmlError> {
     let uuid = Uuid::new_v4();
     let client_id = uuid.to_string();
-    println!("{}", client_id);
     let client_secret = gen_random_string(63);
     let user_id = match id.id() {
         Ok(user_id) => user_id,

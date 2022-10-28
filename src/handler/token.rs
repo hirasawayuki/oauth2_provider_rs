@@ -81,8 +81,8 @@ pub async fn get_token(
             let access_token = gen_random_string(63);
             let utc: DateTime<Utc> = Utc::now();
             let now: NaiveDateTime = utc.naive_local();
-            let expires_at = now + Duration::minutes(30);
-            if let Err(_) = access_token::create(&access_token, &auth_code.user_id.to_string(), &oauth_client.client_id, "all", expires_at, &connection_pool).await {
+            let access_token_expires_at = now + Duration::minutes(30);
+            if let Err(_) = access_token::create(&access_token, &auth_code.user_id.to_string(), &oauth_client.client_id, "all", access_token_expires_at, &connection_pool).await {
                  return Err(JsonError::InternalServerError);
             }
 
@@ -94,10 +94,14 @@ pub async fn get_token(
                  return Err(JsonError::InternalServerError);
             }
 
+            if let Err(_) = authorization_code::delete(&auth_code.code, &connection_pool).await {
+                 return Err(JsonError::InternalServerError);
+            };
+
             return Ok(HttpResponse::Ok().json(ResponseBody {
                 access_token,
                 refresh_token,
-                expires_at,
+                expires_at: access_token_expires_at,
             }))
         },
         "refresh_token" => {
@@ -111,17 +115,18 @@ pub async fn get_token(
                 Err(_) => return Err(JsonError::BadRequest(String::from("invalid refresh_token"))),
             };
 
-            let access_token = match access_token::find_by_refresh_token(&refresh_token.token, &connection_pool).await {
+            let access_token = match access_token::find_by_refresh_token(&refresh_token.access_token, &connection_pool).await {
                 Ok(access_token) => access_token,
-                Err(_) => return Err(JsonError::InternalServerError),
+                Err(_) => return Err(JsonError::InternalServerError)
             };
 
-            if let Err(_) = access_token::delete(&refresh_token.access_token, &connection_pool).await {
-                return Err(JsonError::InternalServerError);
-            }
             if let Err(_) = refresh_token::delete(&refresh_token.token, &connection_pool).await {
                 return Err(JsonError::InternalServerError);
             }
+            if let Err(_) = access_token::delete(&refresh_token.access_token, &connection_pool).await {
+                return Err(JsonError::InternalServerError);
+            }
+
             let token = gen_random_string(63);
             let utc: DateTime<Utc> = Utc::now();
             let now: NaiveDateTime = utc.naive_local();
