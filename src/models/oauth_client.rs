@@ -3,27 +3,27 @@ use sqlx::MySqlPool;
 use crate::entity::oauth_client::OAuthClient;
 
 pub async fn create(
-    user_id: &str,
-    name: &str,
-    redirect_uri: &str,
-    scope: &str,
     client_id: &str,
     client_secret: &str,
+    name: &str,
+    user_id: &str,
+    redirect_uri: &str,
+    scope: &str,
     connection_pool: &MySqlPool
 ) -> anyhow::Result<()> {
     sqlx::query(
         r#"
 INSERT INTO
-    oauth_clients (user_id, name, redirect_uri, scope, client_id, client_secret)
+    oauth_clients (client_id, client_secret, name, user_id, redirect_uri, scope)
 VALUES
     (?, ?, ?, ?, ?, ?);
         "#)
-        .bind(user_id)
-        .bind(name)
-        .bind(redirect_uri)
-        .bind(scope)
         .bind(client_id)
         .bind(client_secret)
+        .bind(name)
+        .bind(user_id)
+        .bind(redirect_uri)
+        .bind(scope)
         .execute(connection_pool)
         .await?;
     Ok(())
@@ -36,7 +36,7 @@ pub async fn find_by_client_id(
     let oauth_client = sqlx::query_as::<_, OAuthClient>(
         r#"
 SELECT
-    id, name, user_id, client_id, client_secret, scope, revoked, redirect_uri
+    client_id, client_secret, name, user_id, scope, redirect_uri
 FROM
     oauth_clients
 WHERE
@@ -56,7 +56,7 @@ pub async fn find_by_user_id(
     let oauth_clients = sqlx::query_as::<_, OAuthClient>(
         r#"
 SELECT
-    id, name, user_id, client_id, client_secret, scope, revoked, redirect_uri
+    client_id, client_secret, name, user_id, scope, redirect_uri
 FROM
     oauth_clients
 WHERE

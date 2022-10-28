@@ -6,7 +6,7 @@ use middleware::auth::Authenticator;
 
 mod db;
 mod handler;
-mod repository;
+mod models;
 mod entity;
 mod utils;
 mod middleware;
@@ -38,7 +38,6 @@ async fn main() -> Result<()> {
             .service(web::resource("/logout").route(web::post().to(handler::login::delete_session)))
             .service(web::resource("/authenticate").route(web::post().to(handler::login::create_session)))
             .service(web::resource("/home").wrap(Authenticator).route(web::get().to(handler::home::index)))
-            .service(web::resource("/token").route(web::post().to(handler::token::get_token)))
             .service(web::scope("/api")
                 .service(web::resource("/token").route(web::post().to(handler::token::get_token)))
                 .service(web::resource("/authorize").wrap(Authenticator).route(web::get().to(handler::authorization::authorize)))

@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 use sqlx::MySqlPool;
 use uuid::Uuid;
 
-use crate::{repository::oauth_client, utils::gen_random_string::gen_random_string, entity::oauth_client::OAuthClient};
+use crate::{models::oauth_client, utils::gen_random_string::gen_random_string, entity::oauth_client::OAuthClient};
 
 use super::error::HtmlError;
 
@@ -41,7 +41,7 @@ pub async fn index(ident: Identity, connection_pool: web::Data<MySqlPool>) -> Re
 
     let oauth_clients = match oauth_client::find_by_user_id(&user_id, &connection_pool).await {
         Ok(oauth_clients) => oauth_clients,
-        Err(_) => return Err(HtmlError::Status5XX)
+        Err(_) => vec![]
     };
 
     let html = IndexTemplate { oauth_clients };
@@ -49,7 +49,6 @@ pub async fn index(ident: Identity, connection_pool: web::Data<MySqlPool>) -> Re
         Ok(body) => Ok(HttpResponse::BadRequest().content_type("text/html").body(body)),
         Err(_) => Err(HtmlError::Status5XX)
     }
-
 }
 
 #[derive(Template)]
@@ -67,21 +66,23 @@ pub async fn create(
     id: Identity
 ) -> Result<HttpResponse, HtmlError> {
     let uuid = Uuid::new_v4();
-    let secret = gen_random_string(255);
+    let client_id = uuid.to_string();
+    println!("{}", client_id);
+    let client_secret = gen_random_string(63);
     let user_id = match id.id() {
         Ok(user_id) => user_id,
         Err(_) => { return Err(HtmlError::Status5XX); }
     };
 
-    if let Err(_) = oauth_client::create(&user_id, &params.name, &params.redirect_uri, "all", &uuid.to_string(), &secret, &connection_pool).await {
+    if let Err(_) = oauth_client::create(&client_id, &client_secret, &params.name, &user_id, &params.redirect_uri, "all", &connection_pool).await {
         return Err(HtmlError::Status5XX);
     }
 
     let html = ClientTemplate {
         name: params.name.clone(),
         redirect_uri: params.redirect_uri.clone(),
-        client_id: uuid.to_string(),
-        client_secret: secret,
+        client_id,
+        client_secret,
     };
 
     match html.render() {

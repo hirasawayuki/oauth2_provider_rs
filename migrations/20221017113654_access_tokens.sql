@@ -1,9 +1,9 @@
 -- Add migration script here
 CREATE TABLE `access_tokens` (
-  `token` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `token` varchar(63) COLLATE utf8_unicode_ci NOT NULL,
   `user_id` int(10) unsigned NOT NULL,
-  `client_id` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
-  `scope` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `client_id` varchar(63) COLLATE utf8_unicode_ci NOT NULL,
+  `scope` varchar(63) COLLATE utf8_unicode_ci NOT NULL,
   `expires_at` datetime NOT NULL,
   PRIMARY KEY (`token`),
   CONSTRAINT `fk_access_tokens_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),

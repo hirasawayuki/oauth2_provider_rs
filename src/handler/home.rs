@@ -3,7 +3,7 @@ use actix_web::{HttpResponse, web};
 use askama::Template;
 use sqlx::MySqlPool;
 
-use crate::repository::user;
+use crate::models::user;
 
 use super::error::HtmlError;
 

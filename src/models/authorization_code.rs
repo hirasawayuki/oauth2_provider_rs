@@ -10,7 +10,7 @@ pub async fn find_by_code(
     let authorization_code = sqlx::query_as::<_, AuthorizationCode>(
         r#"
 SELECT
-    code, user_id, client_id, revoked, redirect_uri
+    code, user_id, client_id, expires_at
 FROM
     authorization_codes
 WHERE

@@ -43,7 +43,9 @@ impl ResponseError for HtmlError {
 
 #[derive(Debug)]
 pub enum JsonError {
-    BadRequest,
+    BadRequest(String),
+    Unauthorized(String),
+    NotFound(String),
     InternalServerError,
 }
 
@@ -62,16 +64,28 @@ impl fmt::Display for JsonError {
 impl ResponseError for JsonError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            Self::BadRequest => {
+            Self::BadRequest(message) => {
                 HttpResponse::BadRequest().json(ErrorBody{
                     status: String::from("400"),
-                    message: String::from("invalid request"),
+                    message: String::from("invalid request: ") + &message,
                 })
             },
+            Self::Unauthorized(message) => {
+                HttpResponse::BadRequest().json(ErrorBody{
+                    status: String::from("401"),
+                    message: String::from("unauthorized: ") + &message,
+                })
+            },
+            Self::NotFound(message) => {
+                HttpResponse::BadRequest().json(ErrorBody{
+                    status: String::from("404"),
+                    message: String::from("not found: ") + &message,
+                })
+            }
             Self::InternalServerError => {
                 HttpResponse::InternalServerError().json(ErrorBody{
                     status: String::from("500"),
-                    message: String::from("InternalServerError"),
+                    message: String::from("internal server error: "),
                 })
             }
         }

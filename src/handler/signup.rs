@@ -3,7 +3,7 @@ use askama::Template;
 use serde::{Serialize, Deserialize};
 use sqlx::MySqlPool;
 
-use crate::{ repository::user, utils::hash_password::hash_password};
+use crate::{ models::user, utils::hash_password::hash_password};
 use super::error::HtmlError;
 
 #[derive(Template)]

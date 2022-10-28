@@ -1,8 +1,8 @@
 -- Add migration script here
-CREATE TABLE `authorization_code` (
-  `code` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+CREATE TABLE `authorization_codes` (
+  `code` varchar(63) COLLATE utf8_unicode_ci NOT NULL,
   `user_id` int(10) unsigned NOT NULL,
-  `client_id` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `client_id` varchar(63) COLLATE utf8_unicode_ci NOT NULL,
   `expires_at` datetime NOT NULL,
   PRIMARY KEY (`code`),
   CONSTRAINT `fk_authorize_codes_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
