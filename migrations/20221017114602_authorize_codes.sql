@@ -1,11 +1,10 @@
 -- Add migration script here
-CREATE TABLE `authorize_codes` (
+CREATE TABLE `authorization_code` (
   `code` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
   `user_id` int(10) unsigned NOT NULL,
-  `client_id` int(10) unsigned NOT NULL,
-  `revoked` tinyint(1) NOT NULL DEFAULT '0',
-  `expires_at` datetime DEFAULT NULL,
+  `client_id` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `expires_at` datetime NOT NULL,
   PRIMARY KEY (`code`),
   CONSTRAINT `fk_authorize_codes_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `fk_authorize_codes_oauth_clients` FOREIGN KEY (`client_id`) REFERENCES `oauth_clients` (`id`)
+  CONSTRAINT `fk_authorize_codes_oauth_clients` FOREIGN KEY (`client_id`) REFERENCES `oauth_clients` (`client_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
