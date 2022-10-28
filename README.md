@@ -5,12 +5,11 @@ OAuth2.0 provider is built on Rust.
 - [x] User signup (/signup)
 - [x] User login (/login)
 - [x] Authorize endpoint (/oauth/authorize)
-- [x] Register OAuthClient (/oauth_client/new)
-- [x] Token endpoint (/oauth/token)
+- [x] OAuthClient　registration (/oauth_client/new)
+- [x] Token generate (/oauth/token)
 - [x] Token refresh (/oauth/token)
-- [ ] Token introspection (/oauth/introspection)
-- [ ] Resource endpoint (/resources) 
 - [ ] PKCE
+- [ ] Resource endpoint (/resources) 
 
 ## Usage
 ### Build development
@@ -39,27 +38,24 @@ column | type
 *id | int
 name | varchar(32)
 email | varchar(255)
-password | varchar(36)
+password | varchar(32)
 
 ### oauth_clients
 column | type
 ---- | ----
-*id | int
+*client_id | varchar(32)
 name | varchar(32)
-client_id | varchar(255)
-client_secret | varchar(255)
+client_secret | varchar(32)
 scope | varchar(32)
-revoked | tinyint(1)
 redirect_uri | varchar(255)
 
 ### access_tokens
 column | type
 ---- | ----
-*token | varchar
+*token | varchar(32)
 user_id | int
 client_id | int
 scope | varchar(32)
-revoked | tinyint(1)
 expires_at | datetime
 
 ### refresh_tokens
@@ -67,7 +63,6 @@ column | type
 ---- | ----
 *refresh_token | varchar(32)
 access_token | varchar(32)
-revoked | tinyint(1)
 expires_at | datetime
 
 ### authorization_codes
@@ -75,6 +70,5 @@ column | type
 ---- | ----
 *code | varchar(32)
 user_id | int
-client_id | int
-revoked | tinyint(1)
+client_id | varchar(32)
 expires_at | datetime
