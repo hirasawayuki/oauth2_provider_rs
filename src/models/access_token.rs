@@ -1,6 +1,28 @@
 use chrono::NaiveDateTime;
 use sqlx::MySqlPool;
 
+use crate::entity::access_token::AccessToken;
+
+pub async fn find_by_refresh_token(
+    refresh_token: &str,
+    connection_pool: &MySqlPool
+) -> anyhow::Result<AccessToken> {
+    let refresh_token = sqlx::query_as::<_, AccessToken>(
+        r#"
+SELECT
+    token, user_id, client_id, scope, expires_at
+FROM
+    access_tokens
+WHERE
+    token = ?
+        "#)
+        .bind(refresh_token)
+        .fetch_one(connection_pool)
+        .await?;
+
+    anyhow::Ok(refresh_token)
+}
+
 pub async fn create(
     token: &str,
     user_id: &str,
