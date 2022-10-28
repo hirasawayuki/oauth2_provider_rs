@@ -38,7 +38,7 @@ column | type
 *id | int
 name | varchar(32)
 email | varchar(255)
-password | varchar(32)
+password | varchar(100)
 
 ### oauth_clients
 column | type
