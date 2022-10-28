@@ -36,39 +36,39 @@ Error Handling | anyhow | https://github.com/dtolnay/anyhow
 column | type
 ---- | ----
 *id | int
-name | varchar(32)
+name | varchar(63)
 email | varchar(255)
 password | varchar(100)
 
 ### oauth_clients
 column | type
 ---- | ----
-*client_id | varchar(32)
-name | varchar(32)
-client_secret | varchar(32)
-scope | varchar(32)
+*client_id | varchar(63)
+name | varchar(63)
+client_secret | varchar(63)
+scope | varchar(63)
 redirect_uri | varchar(255)
 
 ### access_tokens
 column | type
 ---- | ----
-*token | varchar(32)
+*token | varchar(63)
 user_id | int
 client_id | int
-scope | varchar(32)
+scope | varchar(63)
 expires_at | datetime
 
 ### refresh_tokens
 column | type
 ---- | ----
-*refresh_token | varchar(32)
-access_token | varchar(32)
+*refresh_token | varchar(63)
+access_token | varchar(63)
 expires_at | datetime
 
 ### authorization_codes
 column | type
 ---- | ----
-*code | varchar(32)
+*code | varchar(63)
 user_id | int
-client_id | varchar(32)
+client_id | varchar(63)
 expires_at | datetime
