@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use sqlx::{MySqlPool, MySqlExecutor, MySql };
+use sqlx::{ MySqlExecutor, MySql };
 
 use crate::entity::access_token::AccessToken;
 
