@@ -3,7 +3,7 @@ use sqlx::{ MySqlExecutor, MySql };
 
 use crate::entity::access_token::AccessToken;
 
-pub async fn find_by_refresh_token<'e, E>(
+pub async fn find_by_token<'e, E>(
     token: &str,
     executor: E,
 ) -> anyhow::Result<AccessToken>

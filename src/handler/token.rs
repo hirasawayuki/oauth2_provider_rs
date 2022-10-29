@@ -100,7 +100,7 @@ pub async fn get_token(
                 Err(_) => return Err(JsonError::BadRequest(String::from("refresh_token parameter is required."))),
             };
 
-            let access_token = match access_token::find_by_refresh_token::<&MySqlPool>(&refresh_token.access_token, &connection_pool).await {
+            let access_token = match access_token::find_by_token::<&MySqlPool>(&refresh_token.access_token, &connection_pool).await {
                 Ok(token) => token,
                 Err(_) => return Err(JsonError::BadRequest(String::from("refresh_token parameter is required."))),
             };

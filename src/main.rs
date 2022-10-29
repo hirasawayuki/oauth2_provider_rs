@@ -2,7 +2,7 @@ use actix_identity::IdentityMiddleware;
 use actix_session::{SessionMiddleware, storage::CookieSessionStore, config::PersistentSession};
 use actix_web::{HttpServer, App, web, middleware::Logger, cookie::{self, Key}};
 use anyhow::{Result, Ok};
-use middleware::auth::Authenticator;
+use middleware::{auth::Authenticator, token_verifier::TokenVerifier};
 
 mod db;
 mod handler;
@@ -42,6 +42,10 @@ async fn main() -> Result<()> {
                 .service(web::resource("/token").route(web::post().to(handler::token::get_token)))
                 .service(web::resource("/authorize").wrap(Authenticator).route(web::get().to(handler::authorization::authorize)))
             )
+            .service(web::scope("/api")
+                .service(web::resource("/resources").wrap(TokenVerifier).route(web::get().to(handler::resource::index)))
+            )
+
     }).bind(("0.0.0.0", 8080))?
     .run()
     .await?;

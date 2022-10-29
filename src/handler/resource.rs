@@ -1,16 +1,15 @@
 use actix_web::HttpResponse;
-use askama::Template;
+use serde::{Deserialize, Serialize};
 
-use super::error::HtmlError;
+use super::error::JsonError;
 
-#[derive(Template)]
-#[template(path="../templates/index.html")]
-struct IndexTemplate{}
+#[derive(Serialize, Deserialize)]
+pub struct ResponseBody {
+    message: String,
+}
 
-pub async fn index() -> Result<HttpResponse, HtmlError> {
-    let html = IndexTemplate{};
-    match html.render() {
-        Ok(body) => Ok(HttpResponse::Ok().content_type("text/html").body(body)),
-        Err(_) => Err(HtmlError::Status5XX),
-    }
+pub async fn index() -> Result<HttpResponse, JsonError> {
+    Ok(HttpResponse::Ok().json(ResponseBody {
+        message: String::from("Successfully verified access token")
+    }))
 }
