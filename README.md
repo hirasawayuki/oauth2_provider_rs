@@ -8,19 +8,88 @@ OAuth2.0 provider is built on Rust.
 - [x] OAuthClient　registration (/oauth_client/new)
 - [x] Token generate (/oauth/token)
 - [x] Token refresh (/oauth/token)
+- [x] Resource endpoint (/resources) 
 - [ ] PKCE
-- [ ] Resource endpoint (/resources) 
 
-## Usage
-### Build development
+## Build development
 ```sh
 $ docker-compose build
 $ docker-compose up -d
 ```
 
-### DB migration
+## DB migration
 ```
 $ sqlx migrate run --database-url {DB_URL}/oauth2_development
+```
+
+## Usage
+### Preparation
+1. Access http://localhost/signup and create user
+2. After login, access http://oauth_client/new and create OAuthClient
+3. Logout
+
+### Authorization
+GET /oauth/authorize
+
+Params | Required | example
+---- | ---- | ----
+client_id | ○ | 0b32d324-5284-46a7-b71f-1b4c228415d7
+redirect_uri | ○ | http://localhost:8080/callback
+response_type | ○ | code
+scope | ○ | all
+state | ○ | IuEInQ6TzROoFlZf4gbA0WaE19OyDl5TmJ9sddX9PRqykrP1Fb9F0oHBxTVHcMa 
+
+**Response**<br>
+HTTP status 302<br>
+Location: http://localhost:8080/callback?code={authorization_code}&state={state}
+
+### Get AccessToken
+POST /oauth/token
+
+Params | Required | example
+---- | ---- | ----
+code | ○ | IuEInQ6TzROoFlZf4gbA0WaE19OyDl5TmJ9sddX9PRqykrP1Fb9F0oHBxTVHcMa
+grant_type | ○ | authorization_code
+
+**Response**<br>
+HTTP status 200<br>
+Body 
+```json
+{
+  "access_token": "{access_token}",
+  "refresh_token": "{refresh_token}",
+  "expires_at": "{access_token expires_at}"
+}
+```
+
+### Refresh token
+POST /oauth/token
+
+Params | Required | example
+---- | ---- | ----
+refresh_token | ○ | IuEInQ6TzROoFlZf4gbA0WaE19OyDl5TmJ9sddX9PRqykrP1Fb9F0oHBxTVHcMa
+grant_type | ○ | refresh_token
+
+**Response**<br>
+HTTP status 200<br>
+Body 
+```json
+{
+  "access_token": "{access_token}",
+  "refresh_token": "{refresh_token}",
+  "expires_at": "{access_token expires_at}"
+}
+```
+
+### Get Protected Resource
+POST /api/resources
+Header: Authorization: Bearer {Access token}
+
+**Response**<br>
+HTTP status 200<br>
+Body 
+```json
+{ "message": "Verify access token successful" }
 ```
 
 ## Library
