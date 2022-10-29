@@ -10,6 +10,6 @@ pub struct ResponseBody {
 
 pub async fn index() -> Result<HttpResponse, JsonError> {
     Ok(HttpResponse::Ok().json(ResponseBody {
-        message: String::from("Successfully verified access token")
+        message: String::from("Verify access token successful")
     }))
 }
