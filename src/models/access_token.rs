@@ -1,12 +1,15 @@
 use chrono::NaiveDateTime;
-use sqlx::MySqlPool;
+use sqlx::{MySqlPool, MySqlExecutor, MySql };
 
 use crate::entity::access_token::AccessToken;
 
-pub async fn find_by_refresh_token(
+pub async fn find_by_refresh_token<'e, E>(
     token: &str,
-    connection_pool: &MySqlPool
-) -> anyhow::Result<AccessToken> {
+    executor: E,
+) -> anyhow::Result<AccessToken>
+where
+    E: MySqlExecutor<'e, Database = MySql>
+{
     let refresh_token = sqlx::query_as::<_, AccessToken>(
         r#"
 SELECT
@@ -17,20 +20,23 @@ WHERE
     token = ?
         "#)
         .bind(token)
-        .fetch_one(connection_pool)
+        .fetch_one(executor)
         .await?;
 
     anyhow::Ok(refresh_token)
 }
 
-pub async fn create(
+pub async fn create<'e, E>(
     token: &str,
     user_id: &str,
     client_id: &str,
     scope: &str,
     expires_at: NaiveDateTime,
-    connection_pool: &MySqlPool)
--> anyhow::Result<()> {
+    executor: E
+) -> anyhow::Result<()>
+where
+    E: MySqlExecutor<'e, Database = MySql>
+{
     sqlx::query(
         r#"
 INSERT INTO
@@ -43,16 +49,19 @@ VALUES
         .bind(client_id)
         .bind(scope)
         .bind(expires_at.to_string())
-        .execute(connection_pool)
+        .execute(executor)
         .await?;
 
     Ok(())
 }
 
-pub async fn delete(
+pub async fn delete<'e, E>(
     token: &str,
-    connection_pool: &MySqlPool
-)-> anyhow::Result<()> {
+    executor: E,
+)-> anyhow::Result<()>
+where
+    E: MySqlExecutor<'e, Database = MySql>
+{
     sqlx::query(
         r#"
 DELETE FROM
@@ -61,7 +70,7 @@ WHERE
     token = ?;
         "#)
         .bind(token)
-        .execute(connection_pool)
+        .execute(executor)
         .await?;
 
     Ok(())

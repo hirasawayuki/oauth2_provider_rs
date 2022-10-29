@@ -1,10 +1,10 @@
-use actix_web::{HttpResponse, web, HttpRequest};
+use actix_web::{HttpResponse, web, HttpRequest, http::header::HeaderMap};
 use base64::decode;
 use chrono::{DateTime, Utc, NaiveDateTime, Duration};
 use serde::{Serialize, Deserialize};
-use sqlx::MySqlPool;
+use sqlx::{MySqlPool, Transaction, MySql};
 
-use crate::{utils::gen_random_string::gen_random_string, models::{access_token, refresh_token, oauth_client, authorization_code}};
+use crate::{utils::gen_random_string::gen_random_string, models::{access_token, refresh_token, oauth_client, authorization_code}, db::establish_connection};
 
 use super::error::JsonError;
 
@@ -25,29 +25,19 @@ pub struct ResponseBody {
 pub async fn get_token(
     body: web::Json<RequstBody>,
     req: HttpRequest,
-    connection_pool: web::Data<MySqlPool>
 ) -> Result<HttpResponse, JsonError> {
+    let connection_pool = match establish_connection().await {
+        Ok(pool) => pool,
+        Err(_) => return Err(JsonError::InternalServerError)
+    };
+
     let headers = req.headers();
-    let header_value = match headers.get("Authorization") {
-        Some(authorization_header) => { authorization_header },
-        None => { return Err(JsonError::BadRequest(String::from("invalid Authorization header."))) }
+    let (client_id, client_secret) = match parse_client_credentials(headers) {
+        Ok((id, secret)) => (id, secret),
+        Err(_) => return Err(JsonError::BadRequest(String::from("invalid Authorization header.")))
     };
 
-    let authorization_header = match header_value.to_str() {
-        Ok(header) => header,
-        Err(_) => { return Err(JsonError::BadRequest(String::from("invalid Authorization header."))) }
-    };
-
-    let encoded: Vec<&str> = authorization_header.split(" ").collect();
-    let decoded = match decode(encoded[1]) {
-        Ok(decoded) => { decoded.iter().map(|&c| c as char).collect::<String>()},
-        Err(_) => { return Err(JsonError::BadRequest(String::from("invalid Authorization header."))) }
-    };
-
-    let cred: Vec::<&str> = decoded.split(":").collect();
-    let client_id = cred[0];
-    let client_secret = cred[1];
-    let oauth_client = match oauth_client::find_by_client_id(client_id, &connection_pool).await {
+    let oauth_client = match oauth_client::find_by_client_id(&client_id, &connection_pool).await {
         Ok(oauth_client) => oauth_client,
         Err(_) => {
             return Err(JsonError::BadRequest(String::from("invalid client.")))
@@ -64,6 +54,7 @@ pub async fn get_token(
                 Some(code) => code,
                 None => return Err(JsonError::BadRequest(String::from("authorization code is required.")))
             };
+
             let auth_code = match authorization_code::find_by_code(&*code, &connection_pool).await {
                 Ok(authorization_code) => authorization_code,
                 Err(_) => {
@@ -78,31 +69,25 @@ pub async fn get_token(
                 return Err(JsonError::BadRequest(String::from("authorization_code is expired.")))
             }
 
-            let access_token = gen_random_string(63);
-            let utc: DateTime<Utc> = Utc::now();
-            let now: NaiveDateTime = utc.naive_local();
-            let access_token_expires_at = now + Duration::minutes(30);
-            if let Err(_) = access_token::create(&access_token, &auth_code.user_id.to_string(), &oauth_client.client_id, "all", access_token_expires_at, &connection_pool).await {
-                 return Err(JsonError::InternalServerError);
-            }
-
-            let refresh_token = gen_random_string(63);
-            let utc: DateTime<Utc> = Utc::now();
-            let now: NaiveDateTime = utc.naive_local();
-            let expires_at = now + Duration::days(30);
-            if let Err(_) = refresh_token::create(&refresh_token, &access_token, expires_at, &connection_pool).await {
-                 return Err(JsonError::InternalServerError);
-            }
-
-            if let Err(_) = authorization_code::delete(&auth_code.code, &connection_pool).await {
-                 return Err(JsonError::InternalServerError);
+            let mut tx = match connection_pool.begin().await {
+                Ok(tx) => tx,
+                Err(_) => return Err(JsonError::InternalServerError)
+            };
+            let (access_token, refresh_token, expires_at) = match generate_token(auth_code.user_id, &client_id, "all", &mut tx).await {
+                Ok((access_token, refresh_token, expires_at)) => (access_token, refresh_token, expires_at),
+                Err(_) => {
+                    tx.rollback().await.unwrap_or(());
+                    return Err(JsonError::InternalServerError)
+                }
             };
 
-            return Ok(HttpResponse::Ok().json(ResponseBody {
-                access_token,
-                refresh_token,
-                expires_at: access_token_expires_at,
-            }))
+            if let Err(_) = authorization_code::delete(&auth_code.code, &connection_pool).await {
+                 tx.rollback().await.unwrap_or(());
+                 return Err(JsonError::InternalServerError);
+            };
+            tx.commit().await.unwrap_or(());
+
+            return Ok(HttpResponse::Ok().json(ResponseBody { access_token, refresh_token, expires_at }))
         },
         "refresh_token" => {
             let refresh_token = match &body.refresh_token {
@@ -110,47 +95,87 @@ pub async fn get_token(
                 None => return Err(JsonError::BadRequest(String::from("refresh_token parameter is required."))),
             };
 
-            let refresh_token = match refresh_token::find_by_refresh_token(refresh_token, &connection_pool).await {
-                Ok(refresh_token) => refresh_token,
-                Err(_) => return Err(JsonError::BadRequest(String::from("invalid refresh_token"))),
+            let refresh_token = match refresh_token::find_by_refresh_token::<&MySqlPool>(refresh_token, &connection_pool).await {
+                Ok(token) => token,
+                Err(_) => return Err(JsonError::BadRequest(String::from("refresh_token parameter is required."))),
             };
 
-            let access_token = match access_token::find_by_refresh_token(&refresh_token.access_token, &connection_pool).await {
-                Ok(access_token) => access_token,
+            let access_token = match access_token::find_by_refresh_token::<&MySqlPool>(&refresh_token.access_token, &connection_pool).await {
+                Ok(token) => token,
+                Err(_) => return Err(JsonError::BadRequest(String::from("refresh_token parameter is required."))),
+            };
+
+            let mut tx = match connection_pool.begin().await {
+                Ok(tx) => tx,
                 Err(_) => return Err(JsonError::InternalServerError)
             };
 
-            if let Err(_) = refresh_token::delete(&refresh_token.token, &connection_pool).await {
+            if let Err(_) = delete_old_token(&refresh_token.token, &mut tx).await {
+                tx.rollback().await.unwrap_or(());
                 return Err(JsonError::InternalServerError);
-            }
-            if let Err(_) = access_token::delete(&refresh_token.access_token, &connection_pool).await {
-                return Err(JsonError::InternalServerError);
-            }
+            };
 
-            let token = gen_random_string(63);
-            let utc: DateTime<Utc> = Utc::now();
-            let now: NaiveDateTime = utc.naive_local();
-            let expires_at = now + Duration::minutes(30);
-            if let Err(_) = access_token::create(&token, &access_token.user_id.to_string(), &oauth_client.client_id, &access_token.scope, expires_at, &connection_pool).await {
-                 return Err(JsonError::InternalServerError);
-            }
+            let (access_token, refresh_token, expires_at) = match generate_token(access_token.user_id, &client_id, "all", &mut tx).await {
+                Ok((access_token, refresh_token, expires_at)) => (access_token, refresh_token, expires_at),
+                Err(_) => {
+                    tx.rollback().await.unwrap_or(());
+                    return Err(JsonError::InternalServerError)
+                }
+            };
+            tx.commit().await.unwrap_or(());
 
-            let refresh_token = gen_random_string(63);
-            let utc: DateTime<Utc> = Utc::now();
-            let now: NaiveDateTime = utc.naive_local();
-            let expires_at = now + Duration::days(30);
-            if let Err(_) = refresh_token::create(&refresh_token, &token, expires_at, &connection_pool).await {
-                 return Err(JsonError::InternalServerError);
-            }
-
-            return Ok(HttpResponse::Ok().json(ResponseBody {
-                access_token: token,
-                refresh_token,
-                expires_at,
-            }))
+            return Ok(HttpResponse::Ok().json(ResponseBody { access_token, refresh_token, expires_at }))
         },
         _ => {
             return Err(JsonError::BadRequest(String::from("invalid grant_type.")));
         }
     }
+}
+
+async fn generate_token(user_id: u32, client_id: &str, scope: &str, tx: &mut Transaction<'static, MySql>) -> anyhow::Result<(String, String, NaiveDateTime)> {
+    let access_token = gen_random_string(63);
+    let utc: DateTime<Utc> = Utc::now();
+    let now: NaiveDateTime = utc.naive_local();
+    let expires_at = now + Duration::minutes(30);
+    if let Err(_) = access_token::create::<&mut Transaction<MySql>>(&access_token, &user_id.to_string(), client_id, scope, expires_at, tx).await {
+         return Err(anyhow::anyhow!("failed to create access_token"));
+    }
+
+    let refresh_token = gen_random_string(63);
+    let utc: DateTime<Utc> = Utc::now();
+    let now: NaiveDateTime = utc.naive_local();
+    if let Err(_) = refresh_token::create::<&mut Transaction<MySql>>(&refresh_token, &access_token, now + Duration::days(30), tx).await {
+         return Err(anyhow::anyhow!("failed to create refresh_token"));
+    }
+
+    anyhow::Ok((access_token, refresh_token, expires_at))
+}
+
+fn parse_client_credentials(headers: &HeaderMap) -> anyhow::Result<(String, String)> {
+    let header_value = match headers.get("Authorization") {
+        Some(value) => value,
+        None => return  Err(anyhow::anyhow!("Authorization header not exists"))
+    };
+    let authorization_header = header_value.to_str()?;
+    let encoded: Vec<&str> = authorization_header.split(" ").collect();
+    let decoded_u8 = decode(encoded[1])?;
+    let decoded = decoded_u8.iter().map(|&c| c as char).collect::<String>();
+    let cred: Vec::<&str> = decoded.split(":").collect();
+    if cred.len() != 2 {
+        return  Err(anyhow::anyhow!("invalid Authorization header"))
+    }
+
+    anyhow::Ok((String::from(cred[0]), String::from(cred[1])))
+}
+
+async fn delete_old_token(refresh_token: &str, tx: &mut Transaction<'static, MySql>) -> anyhow::Result<()> {
+    let refresh_token = refresh_token::find_by_refresh_token::<&mut Transaction<MySql>>(refresh_token, tx).await?;
+    if let Err(e) = refresh_token::delete::<&mut Transaction<MySql>>(&refresh_token.token, tx).await {
+        return Err(e);
+    }
+    if let Err(e) = access_token::delete::<&mut Transaction<MySql>>(&refresh_token.access_token, tx).await {
+        return Err(e);
+    }
+
+    return anyhow::Ok(());
 }

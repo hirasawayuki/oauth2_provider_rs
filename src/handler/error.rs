@@ -44,8 +44,8 @@ impl ResponseError for HtmlError {
 #[derive(Debug)]
 pub enum JsonError {
     BadRequest(String),
-    Unauthorized(String),
-    NotFound(String),
+    // Unauthorized(String),
+    // NotFound(String),
     InternalServerError,
 }
 
@@ -70,18 +70,18 @@ impl ResponseError for JsonError {
                     message: String::from("invalid request: ") + &message,
                 })
             },
-            Self::Unauthorized(message) => {
-                HttpResponse::BadRequest().json(ErrorBody{
-                    status: String::from("401"),
-                    message: String::from("unauthorized: ") + &message,
-                })
-            },
-            Self::NotFound(message) => {
-                HttpResponse::BadRequest().json(ErrorBody{
-                    status: String::from("404"),
-                    message: String::from("not found: ") + &message,
-                })
-            }
+            // Self::Unauthorized(message) => {
+            //     HttpResponse::BadRequest().json(ErrorBody{
+            //         status: String::from("401"),
+            //         message: String::from("unauthorized: ") + &message,
+            //     })
+            // },
+            // Self::NotFound(message) => {
+            //     HttpResponse::BadRequest().json(ErrorBody{
+            //         status: String::from("404"),
+            //         message: String::from("not found: ") + &message,
+            //     })
+            // }
             Self::InternalServerError => {
                 HttpResponse::InternalServerError().json(ErrorBody{
                     status: String::from("500"),
