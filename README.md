@@ -4,11 +4,13 @@ OAuth2.0 provider is built on Rust.
 ## Road map
 - [x] User signup (/signup)
 - [x] User login (/login)
+- [ ] Delete User Account
 - [x] Authorize endpoint (/oauth/authorize)
-- [x] OAuthClient　registration (/oauth_client/new)
+- [x] OAuthClient registration (/oauth_client/new)
+- [ ] Delete OAuthClient
 - [x] Token generate (/oauth/token)
 - [x] Token refresh (/oauth/token)
-- [x] Resource endpoint (/resources) 
+- [x] Resource endpoint (/resources)
 - [ ] PKCE
 
 ## Build development
@@ -37,7 +39,7 @@ client_id | ○ | 0b32d324-5284-46a7-b71f-1b4c228415d7
 redirect_uri | ○ | http://localhost:8080/callback
 response_type | ○ | code
 scope | ○ | all
-state | ○ | IuEInQ6TzROoFlZf4gbA0WaE19OyDl5TmJ9sddX9PRqykrP1Fb9F0oHBxTVHcMa 
+state | ○ | IuEInQ6TzROoFlZf4gbA0WaE19OyDl5TmJ9sddX9PRqykrP1Fb9F0oHBxTVHcMa
 
 **Response**<br>
 HTTP status 302<br>
@@ -53,7 +55,7 @@ grant_type | ○ | authorization_code
 
 **Response**<br>
 HTTP status 200<br>
-Body 
+Body
 ```json
 {
   "access_token": "{access_token}",
@@ -72,7 +74,7 @@ grant_type | ○ | refresh_token
 
 **Response**<br>
 HTTP status 200<br>
-Body 
+Body
 ```json
 {
   "access_token": "{access_token}",
@@ -87,7 +89,7 @@ Header: Authorization: Bearer {Access token}
 
 **Response**<br>
 HTTP status 200<br>
-Body 
+Body
 ```json
 { "message": "Verify access token successful" }
 ```
