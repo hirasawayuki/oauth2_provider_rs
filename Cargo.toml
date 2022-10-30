@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-cors = "0.6.3"
 actix-identity = "0.5.2"
 actix-session = { version = "0.7.2", features = ["cookie-session"] }
 actix-web = "4.2.1"
