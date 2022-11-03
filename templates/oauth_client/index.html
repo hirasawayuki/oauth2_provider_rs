@@ -12,10 +12,10 @@
   </div>
   {% for oauth_client in oauth_clients %}
   <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px;">
-    <p style="width: 640px; word-wrap: break-word;"><b>ClientName:</b> {{ oauth_client.name }}</p>
-    <p style="width: 640px; word-wrap: break-word;"><b>RedirectURI:</b> {{ oauth_client.redirect_uri }}</p>
-    <p style="width: 640px; word-wrap: break-word;"><b>ClientID:</b> {{ oauth_client.client_id }}</p>
-    <p style="width: 640px; word-wrap: break-word;"><b>ClientSecret:</b> {{ oauth_client.client_secret }}</p>
+    <p><b>ClientName:</b> {{ oauth_client.name }}</p>
+    <p><b>RedirectURI:</b> {{ oauth_client.redirect_uri }}</p>
+    <p><b>ClientID:</b> {{ oauth_client.client_id }}</p>
+    <p><b>ClientSecret:</b> {{ oauth_client.client_secret }}</p>
   </div>
   {% endfor %}
 </body>
