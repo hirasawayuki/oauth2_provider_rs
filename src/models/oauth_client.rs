@@ -68,3 +68,17 @@ WHERE
 
     anyhow::Ok(oauth_clients)
 }
+
+pub async fn delete(
+    client_id: &str,
+    connection_pool: &MySqlPool
+) -> anyhow::Result<()> {
+    sqlx::query(
+        r#"
+DELETE FROM oauth_clients where client_id = ?;
+        "#)
+        .bind(client_id)
+        .execute(connection_pool)
+        .await?;
+    Ok(())
+}

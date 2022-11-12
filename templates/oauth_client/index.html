@@ -16,6 +16,10 @@
     <p><b>RedirectURI:</b> {{ oauth_client.redirect_uri }}</p>
     <p><b>ClientID:</b> {{ oauth_client.client_id }}</p>
     <p><b>ClientSecret:</b> {{ oauth_client.client_secret }}</p>
+    <form action="/oauth_client/delete" method="post">
+      <input id="client_id" type="hidden" name="client_id" value="{{ oauth_client.client_id }}"/>
+      <button type="submit" style="margin: 24px 0 0 0; width: 240px;">Delete Client</button>
+    </form>
   </div>
   {% endfor %}
 </body>

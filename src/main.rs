@@ -34,6 +34,7 @@ async fn main() -> Result<()> {
             .service(web::resource("/oauth_clients").wrap(Authenticator).route(web::get().to(handler::oauth_client::index)))
             .service(web::resource("/oauth_client/new").wrap(Authenticator).route(web::get().to(handler::oauth_client::new)))
             .service(web::resource("/oauth_client/register").wrap(Authenticator).route(web::post().to(handler::oauth_client::create)))
+            .service(web::resource("/oauth_client/delete").wrap(Authenticator).route(web::post().to(handler::oauth_client::delete)))
             .service(web::resource("/login").route(web::get().to(handler::login::new_session)))
             .service(web::resource("/logout").route(web::post().to(handler::login::delete_session)))
             .service(web::resource("/authenticate").route(web::post().to(handler::login::create_session)))

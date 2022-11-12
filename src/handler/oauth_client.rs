@@ -1,5 +1,5 @@
 use actix_identity::Identity;
-use actix_web::{HttpResponse, web};
+use actix_web::{HttpResponse, web, http::header};
 use askama::Template;
 use serde::{Serialize, Deserialize};
 use sqlx::MySqlPool;
@@ -88,4 +88,20 @@ pub async fn create(
         Ok(body) => Ok(HttpResponse::BadRequest().content_type("text/html").body(body)),
         Err(_) => Err(HtmlError::Status5XX)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DeleteParams {
+    client_id: String
+}
+
+pub async fn delete(
+    params: web::Query<DeleteParams>,
+    connection_pool: web::Data<MySqlPool>
+) -> Result<HttpResponse, HtmlError> {
+    if let Err(_) = oauth_client::delete(&params.client_id, &connection_pool).await {
+        return Err(HtmlError::Status5XX);
+    }
+
+    return Ok(HttpResponse::Found().append_header((header::LOCATION, "/oauth_clients")).finish());
 }
