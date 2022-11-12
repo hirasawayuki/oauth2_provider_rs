@@ -7,7 +7,7 @@ OAuth2.0 provider is built on Rust.
 - [ ] Delete User Account
 - [x] Authorize endpoint (/oauth/authorize)
 - [x] OAuthClient registration (/oauth_client/new)
-- [ ] Delete OAuthClient
+- [x] Delete OAuthClient
 - [x] Token generate (/oauth/token)
 - [x] Token refresh (/oauth/token)
 - [x] Resource endpoint (/api/resources)
