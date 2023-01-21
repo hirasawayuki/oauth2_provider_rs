@@ -1,5 +1,5 @@
-# oauth2_provider_rs
-OAuth2.0 provider is built on Rust.
+# README.md
+OAuth2.0 authorization server in Rust.
 
 ## Road map
 - [x] User signup (/signup)
